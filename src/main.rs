@@ -1,6 +1,6 @@
 use std::io;
+use std::fmt;
 
-#[derive(Debug)]
 enum Operator {
     Plus,
     Minus,
@@ -19,6 +19,18 @@ impl Operator {
         };
 
         Ok(chosen)
+    }
+}
+
+impl fmt::Display for Operator {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let sign = match &self {
+            Operator::Plus => '+',
+            Operator::Minus => '-',
+            Operator::Times => 'x',
+            Operator::Divided => ':',
+        };
+        write!(f, "{}", sign)
     }
 }
 
@@ -74,8 +86,5 @@ fn main() {
         Operator::Divided => operation.operand1 / operation.operand2,
     };
 
-    println!("Il risultato di {0} {1:?} {2} è {3}", operation.operand1, operation.op, operation.operand2, result );
-    // let mut guess = String::new();
-    // io::stdin().read_line(&mut guess).expect("Error reading line");
-    // println!("You wrote: {}", guess);
+    println!("Il risultato di {0} {1} {2} è {3}", operation.operand1, operation.op, operation.operand2, result );
 }
