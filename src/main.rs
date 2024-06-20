@@ -86,5 +86,26 @@ fn main() {
         Operator::Divided => operation.operand1 / operation.operand2,
     };
 
-    println!("Il risultato di {0} {1} {2} è {3}", operation.operand1, operation.op, operation.operand2, result );
+    println!("{}", get_result_for_operation(&operation, result));
+}
+
+fn get_result_for_operation(operation: &Operation, result: i32) -> String {
+    format!("Il risultato di {0} {1} {2} è {3}", operation.operand1, operation.op, operation.operand2, result)
+}
+
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn it_works() {
+        // todo!();
+        assert!(2 + 2 == 4);
+        assert_eq!(2+2, 4);
+        let operation = Operation {op: Operator::Plus, operand1: 2, operand2: 2};
+        let result = get_result_for_operation(&operation, 4);
+        assert_eq!(result, "Il risultato di 2 + 2 è 4");
+    }
 }
