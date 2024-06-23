@@ -1,6 +1,8 @@
 use std::io;
 use std::fmt;
 
+#[derive(Debug)] // needed in tests
+#[derive(PartialEq)] // needed in tests
 enum Operator {
     Plus,
     Minus,
@@ -40,59 +42,59 @@ struct Operation {
     operand2: i32,
 }
 
-fn main() {
-
-    let op = loop {
-        println!("Quale operazione vuoi fare? [ + - x : ]");
-
+fn read_operand(prompt: &'static str, mut reader: impl io::BufRead) -> i32 {
+    loop {
+        println!("{}", prompt);
         let mut op = String::new();
-        io::stdin().read_line(&mut op).expect("Errore di lettura della prima linea");
+        reader.read_line(&mut op).expect("Errore di lettura operando");
+        let parsed_op = op.trim().parse::<i32>();
+        if parsed_op.is_ok() {
+            break parsed_op.unwrap();
+        } 
+    }
+}
+
+fn read_operator(prompt: &'static str, mut reader: impl io::BufRead) -> Operator {
+    loop {
+        println!("{}", prompt);
+        let mut op = String::new();
+        reader.read_line(&mut op).expect("Errore di lettura operando");
         let op = op.chars().nth(0).expect("Errore di lettura del primo carattere");
         let parsed_op = Operator::from_char(op);
         if parsed_op.is_ok() {
             break parsed_op.unwrap();
         }
-    };
+    }
+}
 
-    let op1 = loop {
-        let mut op1 = String::new();
-        println!("Primo operando?");
-        io::stdin().read_line(&mut op1).expect("Errore di lettura primo operando");
-        //     let op1 = op1.trim().parse().expect("Errore di interpretazione operatore 1"); 
-        let parsed_op1 = op1.trim().parse::<i32>();
-        if parsed_op1.is_ok() {
-            break parsed_op1.unwrap();
-        }
-    };
-
-    let op2 = loop {
-        let mut op2 = String::new();
-        println!("Secondo operando?");
-        io::stdin().read_line(&mut op2).expect("Errore di lettura secondo operando");
-        let parsed_op2 = op2.trim().parse::<i32>();
-        if parsed_op2.is_ok() {
-            break parsed_op2.unwrap();
-        } 
-    };
+fn main() {
+    let op = read_operator("Quale operazione vuoi fare? [ + - x : ]", &mut io::stdin().lock());
+    let op1 = read_operand("Primo operando?", &mut io::stdin().lock());
+    let op2 = read_operand("Secondo operando?", &mut io::stdin().lock());
 
     let operation: Operation = Operation {
         op, operand1: op1, operand2: op2
     };
 
-    let result = match operation.op {
+    let result = calculate(&operation);
+
+    let formatted_result = format_result(&operation, result);
+
+    println!("{}", formatted_result);
+}
+
+fn calculate(operation: &Operation) -> i32 {
+    match operation.op {
         Operator::Plus => operation.operand1 + operation.operand2,
         Operator::Minus => operation.operand1 - operation.operand2,
         Operator::Times => operation.operand1 * operation.operand2,
         Operator::Divided => operation.operand1 / operation.operand2,
-    };
-
-    println!("{}", get_result_for_operation(&operation, result));
+    }
 }
 
-fn get_result_for_operation(operation: &Operation, result: i32) -> String {
+fn format_result(operation: &Operation, result: i32) -> String {
     format!("Il risultato di {0} {1} {2} è {3}", operation.operand1, operation.op, operation.operand2, result)
 }
-
 
 
 #[cfg(test)]
@@ -100,12 +102,49 @@ mod test {
     use super::*;
 
     #[test]
-    fn it_works() {
-        // todo!();
-        assert!(2 + 2 == 4);
-        assert_eq!(2+2, 4);
-        let operation = Operation {op: Operator::Plus, operand1: 2, operand2: 2};
-        let result = get_result_for_operation(&operation, 4);
-        assert_eq!(result, "Il risultato di 2 + 2 è 4");
+    fn reading_times_operator() {
+        let input = "x\n".as_bytes();
+        
+        let operator = read_operator("Op?", input);
+        assert_eq!(operator, Operator::Times)
     }
+    
+    #[test]
+    fn reading_times_operator_multiple() {
+        let input = "3\nt\nx\n".as_bytes();
+        
+        let operator = read_operator("Op?", input);
+        assert_eq!(operator, Operator::Times)
+    }
+
+    #[test]
+    fn reading_operand() {
+        let input = "3\n".as_bytes();
+        
+        let operator = read_operand("Op?", input);
+        assert_eq!(operator, 3)
+    }
+
+    #[test]
+    fn reading_operand_multiple_times() {
+        let input = "x\na\n3\n".as_bytes();
+        
+        let operator = read_operand("Op?", input);
+        assert_eq!(operator, 3)
+    }
+
+    #[test]
+    fn test_add() {
+        let operation = Operation {op: Operator::Plus, operand1: 2, operand2: 2};
+        let result = calculate(&operation);
+        assert_eq!(result, 4);
+    }
+
+    #[test]
+    fn test_sub() {
+        let operation = Operation {op: Operator::Minus, operand1: 5, operand2: 2};
+        let result = calculate(&operation);
+        assert_eq!(result, 3);
+    }
+
 }
